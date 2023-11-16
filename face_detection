@@ -1,0 +1,35 @@
+import cv2
+
+def sketch_transform(image):
+    image_grayscale = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # Fix: Convert to grayscale
+    image_grayscale = cv2.GaussianBlur(image_grayscale, (7, 7), 0)
+    image_canny = cv2.Canny(image_grayscale, 10, 80)
+    _, mask = cv2.threshold(image_canny, 30, 255, cv2.THRESH_BINARY_INV)
+    return mask
+
+cap = cv2.VideoCapture(0)
+cv2.destroyAllWindows()
+
+while True:
+    _, im0 = cap.read()
+    ShowCrosshair = False
+    fromCenter = False
+    r = cv2.selectROI('Image', im0, fromCenter, ShowCrosshair)
+    break
+
+while True:
+    _, image_frame = cap.read()
+    rect_image = image_frame[int(r[1]):int(r[1])+int(r[3]), int(r[0]):int(r[0])+int(r[2])]
+    sketch_rect = rect_image.copy()  # Fix: Make a copy of the region of interest
+    sketch_rect = sketch_transform(sketch_rect)
+
+    sketch_rect_rgb = cv2.cvtColor(sketch_rect, cv2.COLOR_GRAY2BGR)  # Fix: Convert to BGR
+    image_frame[int(r[1]):int(r[1])+int(r[3]), int(r[0]):int(r[0])+int(r[2])] = sketch_rect_rgb
+
+    cv2.imshow('Sketcher_ROI', image_frame)
+    
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cap.release()  # Fix: Release the video capture object
+cv2.destroyAllWindows()
